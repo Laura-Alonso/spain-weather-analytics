@@ -1,5 +1,8 @@
 -- 001. Create table with country information
-CREATE TABLE IF NOT EXISTS weather.dim_country (
-	country_id INTEGER PRIMARY KEY,
-	country_name TEXT NOT NULL
-);
+CREATE TABLE weather.dim_country (
+  `country_id` Int32,
+  `country_name` String
+)
+ENGINE = MergeTree
+PRIMARY KEY tuple(country_id)
+ORDER BY tuple(country_id);

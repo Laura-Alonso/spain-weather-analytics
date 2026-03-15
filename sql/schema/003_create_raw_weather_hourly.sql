@@ -1,13 +1,14 @@
 -- 003. Table with weather data directly from te API
-CREATE TABLE IF NOT EXISTS weather.raw_weather_hourly (
-    timestamp DATETIME,
-    city_name TEXT,
-    latitude REAL,
-    longitude REAL,
-    temperature REAL,
-    wind_speed REAL,
-    wind_gusts REAL,
-    precipitation REAL,
-    humidity REAL,
-    pressure REAL
-);
+CREATE TABLE weather.raw_weather_hourly (
+  `timestamp` DateTime,
+  `city_id` Int32,
+  `temperature` Float32,
+  `wind_speed` Float32,
+  `wind_gusts` Float32,
+  `precipitation` Float32,
+  `humidity` Float32,
+  `pressure` Float32
+)
+ENGINE = MergeTree
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (city_id, timestamp);

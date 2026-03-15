@@ -1,5 +1,14 @@
 # **spain-weather-analytics**
 
+This project builds a weather data pipeline for Spain using:
+
+- Open-Meteo API
+- ClickHouse
+- Python ingestion scripts
+- dbt for transformation
+
+The pipeline stores hourly weather observations and prepares them for analytics and forecasting.
+
 ---
 
 ## **Data Warehouse**

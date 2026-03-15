@@ -1,10 +1,12 @@
 -- 002. Create table with city information
 
-CREATE TABLE IF NOT EXISTS weather.dim_city (
-    city_id INTEGER PRIMARY KEY,
-    city_name TEXT NOT NULL,
-    latitude REAL NOT NULL,
-    longitude REAL NOT NULL,
-    country_id INTEGER NOT NULL,
-    FOREIGN KEY (country_id) REFERENCES dim_country(country_id)
-);
+CREATE TABLE weather.dim_city (
+  `city_id` Int32,
+  `city_name` String,
+  `latitude` Float32,
+  `longitude` Float32,
+  `country_id` Int32
+)
+ENGINE = MergeTree
+PRIMARY KEY tuple(city_id)
+ORDER BY tuple(city_id);

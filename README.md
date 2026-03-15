@@ -2,6 +2,21 @@
 
 ---
 
+## **Data Warehouse**
+
+The project uses **ClickHouse** as the analytical database.
+
+ClickHouse is accessed through **CH-UI**, which provides a lightweight interface for running SQL queries and managing tables.
+
+Reasons for choosing ClickHouse:
+
+- Columnar storage optimized for analytical workloads
+- Very fast aggregation queries
+- Suitable for time-series data
+- Simple local deployment
+
+---
+
 ## **Main Features**
 
 * temperature_2m - Main temperature
@@ -20,6 +35,7 @@
     * Madrid
     * Barcelona
     * Alicante
+    * Valladolid
 
 ---
 

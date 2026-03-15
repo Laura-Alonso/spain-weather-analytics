@@ -1,6 +1,6 @@
 -- 002. Create table with city information
 
-CREATE TABLE IF NOT EXISTS dim_city (
+CREATE TABLE IF NOT EXISTS weather.dim_city (
     city_id INTEGER PRIMARY KEY,
     city_name TEXT NOT NULL,
     latitude REAL NOT NULL,

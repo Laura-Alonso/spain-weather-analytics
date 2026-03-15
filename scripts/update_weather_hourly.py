@@ -2,8 +2,7 @@
 import requests
 import pandas as pd
 import clickhouse_connect
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -20,13 +19,7 @@ client = clickhouse_connect.get_client(
 
 
 # API congiguration
-URL = "https://archive-api.open-meteo.com/v1/archive"
-
-END_DATE = datetime.utcnow().date()
-START_DATE = END_DATE - relativedelta(years=2)
-
-START_DATE = START_DATE.strftime("%Y-%m-%d")
-END_DATE = END_DATE.strftime("%Y-%m-%d")
+URL = "https://api.open-meteo.com/v1/forecast"
 
 ## Get city information from ClickHouse
 query = """
@@ -41,14 +34,12 @@ for city in cities:
     LAT = city[1]
     LON = city[2]
 
-    print(f"Downloading data for city {CITY_ID}")
+    print(f"Updating city {CITY_ID}")
     
     # Request parameters
     params = {
         "latitude": LAT,
         "longitude": LON,
-        "start_date": START_DATE,
-        "end_date": END_DATE,
         "hourly": [
             "temperature_2m",
             "wind_speed_10m",
@@ -57,6 +48,7 @@ for city in cities:
             "relative_humidity_2m",
             "pressure_msl"
         ],
+        "past_days": 1,
         "timezone": "Europe/Madrid"
     }
 
@@ -80,8 +72,6 @@ for city in cities:
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df["city_id"] = CITY_ID
 
-    print("Rows downloaded:", len(df))
-
     # Insert the data into ClickHouse
     client.insert_df(
         "raw_weather_hourly",
@@ -89,4 +79,11 @@ for city in cities:
     )
     time.sleep(1)
 
-    print(f"Inserted city {CITY_ID}")
+client.command("""
+ALTER TABLE weather.ingestion_state
+UPDATE
+    last_successful_run = now(),
+    window_start = now() - INTERVAL 1 DAY,
+    window_end = now()
+WHERE pipeline = 'weather_hourly_ingestion'
+""")

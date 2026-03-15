@@ -36,3 +36,9 @@ Insert country and city seeds.
 ## 5. Historical backfill
 
 Run: `sql/quality_checks/weather_backfill_validation.sql`
+
+## 6. Hourly ingestion pipeline
+
+Run the incremental ingestion script: `scripts/update_weather_hourly.py`
+
+The pipeline downloads the latest 24 hours of weather data for all cities and inserts them into `raw_weather_hourly`.

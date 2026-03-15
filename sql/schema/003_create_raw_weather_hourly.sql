@@ -9,6 +9,6 @@ CREATE TABLE weather.raw_weather_hourly (
   `humidity` Float32,
   `pressure` Float32
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (city_id, timestamp);

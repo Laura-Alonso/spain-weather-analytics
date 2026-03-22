@@ -29,6 +29,8 @@ FROM dim_city
 
 cities  = client.query(query).result_rows
 
+total_rows = 0
+
 for city in cities:
     CITY_ID = city[0]
     LAT = city[1]
@@ -36,47 +38,55 @@ for city in cities:
 
     print(f"Updating city {CITY_ID}")
     
-    # Request parameters
-    params = {
-        "latitude": LAT,
-        "longitude": LON,
-        "hourly": [
-            "temperature_2m",
-            "wind_speed_10m",
-            "wind_gusts_10m",
-            "precipitation",
-            "relative_humidity_2m",
-            "pressure_msl"
-        ],
-        "past_days": 1,
-        "timezone": "Europe/Madrid"
-    }
+    try:
+        params = {
+            "latitude": LAT,
+            "longitude": LON,
+            "hourly": [
+                "temperature_2m",
+                "wind_speed_10m",
+                "wind_gusts_10m",
+                "precipitation",
+                "relative_humidity_2m",
+                "pressure_msl"
+            ],
+            "past_days": 1,
+            "timezone": "Europe/Madrid"
+        }
 
-    # Make the API request
-    r = requests.get(URL, params=params, timeout=60)
-    r.raise_for_status()
+        r = requests.get(URL, params=params, timeout=60)
+        r.raise_for_status()
 
-    data = r.json()["hourly"]
-    
-    # Create a DataFrame from the API response
-    df = pd.DataFrame({
-        "timestamp": data["time"],
-        "temperature": data["temperature_2m"],
-        "wind_speed": data["wind_speed_10m"],
-        "wind_gusts": data["wind_gusts_10m"],
-        "precipitation": data["precipitation"],
-        "humidity": data["relative_humidity_2m"],
-        "pressure": data["pressure_msl"]
-    })
+        data = r.json()["hourly"]
+        
+        df = pd.DataFrame({
+            "timestamp": data["time"],
+            "temperature": data["temperature_2m"],
+            "wind_speed": data["wind_speed_10m"],
+            "wind_gusts": data["wind_gusts_10m"],
+            "precipitation": data["precipitation"],
+            "humidity": data["relative_humidity_2m"],
+            "pressure": data["pressure_msl"]
+        })
 
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df["city_id"] = CITY_ID
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df["city_id"] = CITY_ID
+        df["ingestion_ts"] = datetime.utcnow()
 
-    # Insert the data into ClickHouse
-    client.insert_df(
-        "raw_weather_hourly",
-        df
-    )
+        # Filter future timestamps
+        now = datetime.now()
+        df = df[df["timestamp"] <= now]
+
+        rows = len(df)
+        total_rows += rows
+
+        client.insert_df("raw_weather_hourly", df)
+
+        print(f"Inserted {rows} rows for city {CITY_ID}")
+
+    except Exception as e:
+        print(f"ERROR city {CITY_ID}: {e}")
+
     time.sleep(1)
 
 client.command("""

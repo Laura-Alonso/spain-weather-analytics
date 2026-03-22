@@ -7,8 +7,9 @@ CREATE TABLE weather.raw_weather_hourly (
   `wind_gusts` Float32,
   `precipitation` Float32,
   `humidity` Float32,
-  `pressure` Float32
+  `pressure` Float32,
+  `ingestion_ts` DateTime DEFAULT now()
 )
-ENGINE = ReplacingMergeTree
+ENGINE = MergeTree
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (city_id, timestamp);

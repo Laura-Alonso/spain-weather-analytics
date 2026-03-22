@@ -79,12 +79,13 @@ for city in cities:
 
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df["city_id"] = CITY_ID
+    df["ingestion_ts"] = datetime.utcnow()
 
     print("Rows downloaded:", len(df))
 
     # Insert the data into ClickHouse
     client.insert_df(
-        "raw_weather_hourly",
+        "raw_weather_2years",
         df
     )
     time.sleep(1)

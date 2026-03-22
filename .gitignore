@@ -212,3 +212,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# dbt
+dbt/weather_project/target/
+dbt/weather_project/dbt_packages/
+dbt/weather_project/logs/
+dbt/logs/
+profiles.yml

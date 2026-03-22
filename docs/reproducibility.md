@@ -65,3 +65,68 @@ The pipeline runs on a Raspberry Pi (Ubuntu) via cron.
 3. Schedule execution: `crontab-e`:
     * `0 * * * * flock -n /tmp/weather_pipeline.lock -c 'cd /home/ubuntu/weather_pipeline && /usr/bin/python3 scripts/update_weather_hourly.py >> logs/pipeline.log 2>&1'`
 4. Monitoring (logs)
+
+---
+
+## 9. dbt Transformation Layer
+
+**Prerequisites**
+
+`pip install "dbt-clickhouse = 1.7.2"`
+
+** Configure dbt profile**
+
+Create `~/.dbt/profiles.yml` (do NOT commit this file):
+
+```yml
+weather_project:
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      schema: weather
+      host: <CLICKHOUSE_HOST>
+      port: <CLICKHOUSE_PORT>
+      user: <CLICKHOUSE_USER>
+      password: <CLICKHOUSE_PASSWORD>
+      secure: True
+```
+
+**Project structure**
+
+The dbt project lives under `dbt/weather_project/`. Models follow a layered architecture:
+
+```
+models/
+├── src/
+│   └── schema.yml          ← source declarations pointing to ClickHouse raw tables
+└── stg/
+    ├── schema.yml          ← staging model tests and descriptions
+    ├── stg_dim_city.sql
+    ├── stg_dim_country.sql
+    ├── stg_raw_weather_2years.sql
+    └── stg_raw_weather_hourly.sql
+```
+
+**Run dbt**
+
+Verify connection:
+
+```
+cd dbt/weather_project
+dbt debug
+```
+
+Run staging models:
+
+```
+dbt run --select stg
+dbt test --select stg
+```
+
+Generate and serve documentation:
+
+```
+dbt docs generate
+dbt docs serve
+```

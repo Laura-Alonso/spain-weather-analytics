@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: stg_dim_city
+    description: "Staged city dimension table with geographic coordinates"
+    columns:
+      - name: city_id
+        description: "Primary key for city"
+        tests:
+          - unique
+          - not_null
+      - name: city_name
+        description: "Name of the city"
+        tests:
+          - not_null
+      - name: latitude
+        description: "Geographic latitude of the city"
+      - name: longitude
+        description: "Geographic longitude of the city"
+      - name: country_id
+        description: "Foreign key referencing stg_dim_country"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_dim_country')
+              field: country_id
+
+  - name: stg_dim_country
+    description: "Staged country dimension"
+    columns:
+      - name: country_id
+        description: "Primary key for country"
+        tests:
+          - unique
+          - not_null
+      - name: country_name
+        description: "Name of the country"
+        tests:
+          - not_null
+
+  - name: stg_raw_weather_2years
+    description: "Staged historical weather data covering the last 2 years"
+    columns:
+      - name: timestamp
+        description: "Datetime of the weather observation"
+        tests:
+          - not_null
+      - name: city_id
+        description: "Foreign key referencing stg_dim_city"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_dim_city')
+              field: city_id
+      - name: temperature
+        description: "Temperature in Celsius"
+      - name: wind_speed
+        description: "Wind speed in km/h"
+      - name: wind_gusts
+        description: "Wind gusts speed in km/h"
+      - name: precipitation
+        description: "Precipitation amount in mm"
+      - name: humidity
+        description: "Relative humidity percentage (0-100)"
+      - name: pressure
+        description: "Atmospheric pressure in hPa"
+      - name: ingestion_ts
+        description: "Timestamp when the row was loaded into ClickHouse"
+
+  - name: stg_raw_weather_hourly
+    description: "Staged hourly weather data — live feed"
+    columns:
+      - name: timestamp
+        description: "Datetime of the weather observation"
+        tests:
+          - not_null
+      - name: city_id
+        description: "Foreign key referencing stg_weather__dim_city"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_dim_city')
+              field: city_id
+      - name: temperature
+        description: "Temperature in Celsius"
+      - name: wind_speed
+        description: "Wind speed in km/h"
+      - name: wind_gusts
+        description: "Wind gusts speed in km/h"
+      - name: precipitation
+        description: "Precipitation amount in mm"
+      - name: humidity
+        description: "Relative humidity percentage (0-100)"
+      - name: pressure
+        description: "Atmospheric pressure in hPa"
+      - name: ingestion_ts
+        description: "Timestamp when the row was loaded into ClickHouse"

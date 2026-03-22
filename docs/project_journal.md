@@ -82,3 +82,60 @@ Validation queries stored in: `sql/quality_checks/weather_backfill_validation.sq
 * Standardized schema across raw tables:
   * `timestamp` (event time)
   * `ingestion_ts` (ingestion time)
+
+
+---
+
+Day 4 (2026-03-22) — dbt Transformation Layer
+
+Initialized dbt project weather_project using the ClickHouse adapter (dbt-clickhouse=1.7.2).
+Configured profiles.yml with secure ClickHouse connection (port 443, TLS).
+Updated dbt_project.yml with model materialization strategy:
+
+* stg → view
+* intermediate → view
+* marts → table
+
+**Project structure**
+
+```
+models/
+├── src/
+│   └── schema.yml          ← source declarations
+└── stg/
+    ├── schema.yml          ← model tests and descriptions
+    ├── stg_dim_city.sql
+    ├── stg_dim_country.sql
+    ├── stg_raw_weather_2years.sql
+    └── stg_raw_weather_hourly.sql
+```
+
+**Source layer** (src/schema.yml)
+
+Declared all 4 ClickHouse tables as dbt sources:
+
+* `dim_city`
+* `dim_country`
+* `raw_weather_2years`
+* `raw_weather_hourly`
+
+
+Added column descriptions with units (Celsius, km/h, mm, hPa)
+Added data quality tests:
+
+* unique + not_null on all primary keys.
+* not_null on all foreign keys.
+* relationships tests: raw_weather_*.city_id → dim_city, dim_city.country_id → dim_country
+
+
+**Staging layer** (stg/)
+
+Created 4 passthrough staging models reading from sources via `{{ source() }}`.
+Added model-level tests mirroring source tests, using `{{ ref() }}` for cross-model relationships.
+Confirmed `dbt run --select stg` executes successfully against ClickHouse.
+
+**Key decisions**
+
+* Kept staging as pure passthrough (no transformations) — all columns selected as-is
+* Split schema.yml into two files to avoid duplicate source declaration error
+* Used `{{ source() }}` in staging SQL and `{{ ref() }}` in model tests — consistent with dbt conventions.

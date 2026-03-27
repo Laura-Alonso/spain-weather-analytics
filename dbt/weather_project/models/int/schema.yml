@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: int_weather_observations
+    description: "Weather observations daily updated"
+    columns:
+      - name: timestamp
+        description: "Datetime of the weather observation"
+        tests:
+          - not_null
+      - name: city_id
+        description: "Foreign key referencing stg_dim_city"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_dim_city')
+              field: city_id
+      - name: temperature
+        description: "Temperature in Celsius"
+      - name: wind_speed
+        description: "Wind speed in km/h"
+      - name: wind_gusts
+        description: "Wind gusts speed in km/h"
+      - name: precipitation
+        description: "Precipitation amount in mm"
+      - name: humidity
+        description: "Relative humidity percentage (0-100)"
+      - name: pressure
+        description: "Atmospheric pressure in hPa"
+      - name: ingestion_ts
+        description: "Timestamp when the row was loaded into ClickHouse"
+      - name: update_ts
+        description: "Timestamp when dbt last processed this row"

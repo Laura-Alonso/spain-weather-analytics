@@ -86,7 +86,7 @@ Validation queries stored in: `sql/quality_checks/weather_backfill_validation.sq
 
 ---
 
-Day 4 (2026-03-22) — dbt Transformation Layer
+## Day 4 (2026-03-22) — dbt Transformation Layer
 
 Initialized dbt project weather_project using the ClickHouse adapter (dbt-clickhouse=1.7.2).
 Configured profiles.yml with secure ClickHouse connection (port 443, TLS).
@@ -139,3 +139,27 @@ Confirmed `dbt run --select stg` executes successfully against ClickHouse.
 * Kept staging as pure passthrough (no transformations) — all columns selected as-is
 * Split schema.yml into two files to avoid duplicate source declaration error
 * Used `{{ source() }}` in staging SQL and `{{ ref() }}` in model tests — consistent with dbt conventions.
+
+---
+
+## Day 5 (2026-03-27) — dbt Intermediate Layer
+
+* Built intermediate model `int_weather_observations` to deduplicate and unify both raw tables.
+* Updated `dbt_project.yml` — changed `int` materialization from `view` to `table`.
+
+**Model: `int_weather_observations`**
+
+* Unions `raw_weather_2years` and `raw_weather_hourly` via staging refs
+* Deduplicates by `city_id + timestamp` keeping the row with the latest `ingestion_ts`
+* Materialized as **incremental** with `delete+insert` strategy — ClickHouse equivalent of upsert
+
+**Incremental strategy**
+
+* Default run → processes only the last 2 days (via `is_incremental()` filter)
+* Full refresh available via `--full-refresh` flag when a full rebuild is needed
+* 2-day window chosen as a safety buffer — Open-Meteo data is finalized within the same hour it is collected
+
+**Timestamp columns**
+
+* `ingestion_ts` → when the raw data arrived in ClickHouse (from the Python pipeline)
+* `update_ts` → when dbt last processed that row (`now()` at run time)

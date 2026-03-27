@@ -33,7 +33,7 @@ models:
   weather_project:
     stg:
       +materialized: view
-    intermediate:
-      +materialized: view
+    int:
+      +materialized: table
     marts:
       +materialized: table

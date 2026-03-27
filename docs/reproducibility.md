@@ -130,3 +130,47 @@ Generate and serve documentation:
 dbt docs generate
 dbt docs serve
 ```
+
+---
+
+## 10. dbt Intermediate Layer
+
+**Run intermediate models:**
+
+```bash
+cd dbt/weather_project
+dbt run --select int
+dbt test --select int
+```
+
+**Full refresh** (rebuilds the entire table from scratch):
+
+```bash
+dbt run --select int_weather_observations --full-refresh
+```
+
+**Validate no duplicates after run:**
+
+```sql
+SELECT city_id, timestamp, count(*) as cnt
+FROM weather.int_weather_observations
+GROUP BY city_id, timestamp
+HAVING cnt > 1
+```
+
+**Project structure update:**
+
+```
+models/
+├── src/
+│   └── schema.yml
+├── stg/
+│   ├── schema.yml
+│   ├── stg_dim_city.sql
+│   ├── stg_dim_country.sql
+│   ├── stg_raw_weather_2years.sql
+│   └── stg_raw_weather_hourly.sql
+└── int/
+    ├── schema.yml
+    └── int_weather_observations.sql
+```

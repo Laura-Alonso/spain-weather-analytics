@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: mart_weather_daily
+    description: "Daily weather information aggregated"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - date
+              - city
+    columns:
+      - name: date
+        description: "Date of the weather observation"
+        tests:
+          - not_null
+      - name: city
+        description: "Name of the city"
+        tests:
+          - not_null
+      - name: country
+        description: "Name of the country"
+        tests:
+          - not_null
+      - name: avg_temperature
+        description: "Average day temperature in Celsius"
+      - name: min_temperature
+        description: "Minimum day temperature in Celsius"
+      - name: max_temperature
+        description: "Maximum day temperature in Celsius"
+      - name: thermal_range
+        description: "Thermal day temperature range"
+      - name: total_precipitation
+        description: "Total day precipitation amount in mm"
+      - name: rainy_hours
+        description: "Total hours with precipitation in the day"
+      - name: max_wind_speed
+        description: "Maximum day wind speed in km/h"
+      - name: avg_wind_speed
+        description: "Average day wind speed in km/h"
+      - name: max_wind_gusts
+        description: "Maximum day wind gusts speed in km/h"
+      - name: avg_humidity
+        description: "Average day relative humidity percentage (0-100)"       
+      - name: avg_pressure
+        description: "Average day atmospheric pressure in hPa"
+      - name: update_ts
+        description: "Timestamp when dbt last processed this row"
+      - name: ingestion_ts
+        description: "Timestamp when the row was loaded into ClickHouse"

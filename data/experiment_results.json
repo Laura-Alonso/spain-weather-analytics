@@ -1,0 +1,28 @@
+{
+  "run_date": "2026-03-29T11:08:29.416618",
+  "rmse_winner": "LinearRegression",
+  "production_model": "LightGBM",
+  "production_model_reason": "RMSE difference vs LinearRegression is negligible (0.05 C) but LightGBM handles non-linear patterns and extreme weather events better, making it more robust for production use.",
+  "results": {
+    "XGBoost": {
+      "rmse": 0.741841,
+      "mae": 0.517196,
+      "duration": "0m 8s"
+    },
+    "LightGBM": {
+      "rmse": 0.722258,
+      "mae": 0.506234,
+      "duration": "0m 7s"
+    },
+    "LinearRegression": {
+      "rmse": 0.672703,
+      "mae": 0.497834,
+      "duration": "0m 0s"
+    },
+    "Prophet": {
+      "rmse": 58.997186,
+      "mae": 48.083908,
+      "duration": "2m 13s"
+    }
+  }
+}

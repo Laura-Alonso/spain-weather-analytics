@@ -232,6 +232,8 @@ models/
 
 ## Day 7 (2026-03-29) — Hourly Mart & Tech Key
 
+### Marts
+
 **`mart_weather_hourly`**
 - Enriched hourly observations — no aggregation, context added from dim tables
 - Includes `latitude` and `longitude` from `stg_dim_city` for geospatial use cases
@@ -282,3 +284,46 @@ models/
     ├── mart_weather_daily.sql         ← incremental, partitioned, tech_key
     └── mart_weather_hourly.sql        ← incremental, partitioned, tech_key
 ```
+
+
+### ML Experimentation
+
+* Created `ml/train_experiment.py` to compare 4 candidate models for hourly temperature forecasting.
+* Data window: `2024-03-22 00:00:00` → `2026-03-28 23:00:00` — explicit limits to avoid partial days from the RT pipeline.
+
+**Feature engineering**
+
+* Lag features: `lag_1h`, `lag_2h`, `lag_3h`, `lag_12h`, `lag_24h`, `lag_48h`, `lag_168h`
+* Rolling averages: `roll_6h`, `roll_24h`, `roll_72h`
+* Time features: `hour`, `day_of_week`, `month`, `day_of_year`
+* City features: `latitude`, `longitude`, `city_id`
+
+**Evaluation methodology**
+
+* Time-series cross-validation with 5 folds — no data leakage from future to past.
+* Metrics: RMSE and MAE in °C.
+
+**Results**
+
+| Model | RMSE (°C) | MAE (°C) | Duration |
+|---|---|---|---|
+| LinearRegression | 0.672703 | 0.497834 | 0m 0s |
+| LightGBM | 0.722258 | 0.506234 | 0m 7s |
+| XGBoost | 0.741841 | 0.517196 | 0m 8s |
+| Prophet | 58.997186 | 48.083908 | 2m 13s |
+
+**Model selection**
+
+* **LinearRegression** won by RMSE but rejected — 87% of its predictive power comes from `lag_1h` and `lag_2h` alone, making it fragile on extreme weather events and non-linear patterns.
+* **LightGBM** selected for production — RMSE difference is negligible (0.05°C) but distributes importance across lag features, time of day, seasonality and rolling averages, making it significantly more robust.
+* **Prophet** disqualified — Fold 1 errors above 100°C confirm it requires more training data than available in early folds to fit yearly seasonality.
+* Results persisted to `data/experiment_results.json` — single source of truth for `train_production.py`.
+
+**Project structure**
+```
+ml/
+└── train_experiment.py    ← run once on laptop, model comparison
+```
+
+
+

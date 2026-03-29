@@ -1,18 +1,22 @@
 {{ config(
     materialized='incremental',
+    engine='MergeTree()',
     unique_key=['city_id', 'timestamp'],
-    incremental_strategy='delete+insert'
+    incremental_strategy='delete+insert',
+    post_hook="{{ apply_column_comments() }}",
+    partition_by='toYYYYMM(timestamp)',
+    order_by='(city_id, timestamp)'
 ) }}
 
 with weather_hourly as (
 
-    select * from {{ ref('stg_raw_weather_hourly') }}
+    select * from {{ ref('stg_weather_hourly') }}
 
 ),
 
 weather_2years as(
 
-    select * from {{ ref('stg_raw_weather_2years') }}
+    select * from {{ ref('stg_weather_2years') }}
 ),
 
 unioned as (

@@ -27,6 +27,11 @@ models:
         description: "Relative humidity percentage (0-100)"
       - name: pressure
         description: "Atmospheric pressure in hPa"
+      - name: tech_key
+        description: "Deterministic hash key generated from city and timestamp. Used as unique row identifier for joins and traceability across models."
+        tests:
+          - unique
+          - not_null        
       - name: ingestion_ts
         description: "Timestamp when the row was loaded into ClickHouse"
       - name: update_ts

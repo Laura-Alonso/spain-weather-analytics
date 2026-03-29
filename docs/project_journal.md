@@ -163,3 +163,122 @@ Confirmed `dbt run --select stg` executes successfully against ClickHouse.
 
 * `ingestion_ts` → when the raw data arrived in ClickHouse (from the Python pipeline)
 * `update_ts` → when dbt last processed that row (`now()` at run time)
+
+
+---
+
+Here's the Day 6 entry:
+
+---
+
+## Day 6 (2026-03-28) — dbt Marts Layer
+
+* Built first mart model `mart_weather_daily` with daily aggregations per city.
+* Created `apply_column_comments()` macro to persist dbt column descriptions as ClickHouse column comments via `post_hook`.
+
+**Model: `mart_weather_daily`**
+
+* Reads from `int_weather_observations` joined with `stg_dim_city` and `stg_dim_country`.
+* Aggregates to daily granularity per city.
+* Incremental with `delete+insert` strategy and 1-day lookback window.
+* Materialized as **incremental table** with explicit ClickHouse engine config.
+
+**Aggregations included**
+
+* **Temperature**: `avg`, `min`, `max`, `thermal_range` (max - min)
+* **Precipitation**: `total_precipitation` (sum), `rainy_hours` (hours with precipitation > 0)
+* **Wind**: `avg_wind_speed`, `max_wind_speed`, `max_wind_gusts`
+* **Humidity**: `avg_humidity`
+* **Pressure**: `avg_pressure`
+
+**Audit columns**
+
+* `ingestion_ts` → timestamp when the row first appeared in the mart, preserved across incremental runs via `coalesce(existing.ingestion_ts, now())`
+* `update_ts` → timestamp when dbt last recalculated the row
+
+**Issues fixed during development**
+
+* `partition_by` dictionary syntax not supported by dbt-clickhouse 1.7.2 — switched to raw SQL string with explicit `engine='MergeTree()'`
+* `group by` positional references replaced with explicit column names
+* `city` added to GROUP BY to ensure correct aggregation key
+
+**Storage strategy revised**
+
+* `stg_dim_city` and `stg_dim_country` → remain as **views** (tiny reference tables, no storage benefit)
+* `stg_raw_weather_hourly` and `stg_raw_weather_2years` → changed to **tables** with explicit `MergeTree` engine, partitioned by `toYYYYMM(timestamp)`, ordered by `(city_id, timestamp)`
+* All models now include `post_hook="{{ apply_column_comments() }}"` to persist descriptions in ClickHouse
+
+**Project structure update**
+
+```
+models/
+├── src/
+│   └── schema.yml
+├── stg/
+│   ├── schema.yml
+│   ├── stg_dim_city.sql        ← view + column comments
+│   ├── stg_dim_country.sql     ← view + column comments
+│   ├── stg_raw_weather_2years.sql   ← table, partitioned
+│   └── stg_raw_weather_hourly.sql   ← table, partitioned
+├── int/
+│   ├── schema.yml
+│   └── int_weather_observations.sql  ← incremental, partitioned
+└── marts/
+    ├── schema.yml
+    └── mart_weather_daily.sql        ← incremental, partitioned
+```
+
+---
+
+## Day 7 (2026-03-29) — Hourly Mart & Tech Key
+
+**`mart_weather_hourly`**
+- Enriched hourly observations — no aggregation, context added from dim tables
+- Includes `latitude` and `longitude` from `stg_dim_city` for geospatial use cases
+- Incremental with `delete+insert` strategy and 2-day lookback window
+- Partitioned by `toYYYYMM(observation_timestamp)`, ordered by `(city, observation_timestamp)`
+- Includes full audit trail: `ingestion_ts` preserved via `coalesce`, `update_ts` updated on every run
+
+**Tech key**
+
+Introduced `tech_key` across the transformation layer as a deterministic surrogate key for traceability and join simplification:
+
+| Model | Formula |
+|---|---|
+| `stg_raw_weather_2years` | `cityHash64(toString(city_id), toString(timestamp))` |
+| `stg_raw_weather_hourly` | `cityHash64(toString(city_id), toString(timestamp))` |
+| `int_weather_observations` | Inherited from staging via `select *` |
+| `mart_weather_hourly` | `cityHash64(ci.city_name, toString(o.timestamp))` |
+| `mart_weather_daily` | `cityHash64(ci.city_name, toString(toDate(o.timestamp)))` |
+
+**Key decisions:**
+- Not added to raw tables — append-only model contains duplicates, making a unique hash meaningless
+- Not added to dim tables — single column natural keys already exist (`city_id`, `country_id`)
+- Computed at staging level so it flows cleanly through the `UNION ALL` in `int_weather_observations`
+- Tested with `unique` and `not_null` in all models as validation of deduplication logic
+
+**Storage strategy revised**
+- `stg_dim_city` and `stg_dim_country` remain as views — tiny reference tables, no storage benefit
+- `stg_raw_weather_hourly` and `stg_raw_weather_2years` changed to tables with explicit `MergeTree` engine, partitioned by `toYYYYMM(timestamp)`, ordered by `(city_id, timestamp)`
+- All models now include `post_hook="{{ apply_column_comments() }}"` to persist descriptions in ClickHouse
+
+**Project structure**
+
+```
+models/
+├── src/
+│   └── schema.yml
+├── stg/
+│   ├── schema.yml
+│   ├── stg_dim_city.sql               ← view + column comments
+│   ├── stg_dim_country.sql            ← view + column comments
+│   ├── stg_raw_weather_2years.sql     ← table, partitioned, tech_key
+│   └── stg_raw_weather_hourly.sql     ← table, partitioned, tech_key
+├── int/
+│   ├── schema.yml
+│   └── int_weather_observations.sql   ← incremental, partitioned, tech_key
+└── marts/
+    ├── schema.yml
+    ├── mart_weather_daily.sql         ← incremental, partitioned, tech_key
+    └── mart_weather_hourly.sql        ← incremental, partitioned, tech_key
+```

@@ -38,7 +38,7 @@ models:
         tests:
           - not_null
 
-  - name: stg_raw_weather_2years
+  - name: stg_weather_2years
     description: "Staged historical weather data covering the last 2 years"
     columns:
       - name: timestamp
@@ -64,10 +64,15 @@ models:
         description: "Relative humidity percentage (0-100)"
       - name: pressure
         description: "Atmospheric pressure in hPa"
+      - name: tech_key
+        description: "Deterministic hash key generated from city and timestamp. Used as unique row identifier for joins and traceability across models."
+        tests:
+          - unique
+          - not_null
       - name: ingestion_ts
         description: "Timestamp when the row was loaded into ClickHouse"
 
-  - name: stg_raw_weather_hourly
+  - name: stg_weather_hourly
     description: "Staged hourly weather data — live feed"
     columns:
       - name: timestamp
@@ -75,7 +80,7 @@ models:
         tests:
           - not_null
       - name: city_id
-        description: "Foreign key referencing stg_weather__dim_city"
+        description: "Foreign key referencing stg_weather_dim_city"
         tests:
           - not_null
           - relationships:
@@ -93,5 +98,10 @@ models:
         description: "Relative humidity percentage (0-100)"
       - name: pressure
         description: "Atmospheric pressure in hPa"
+      - name: tech_key
+        description: "Deterministic hash key generated from city and timestamp. Used as unique row identifier for joins and traceability across models."
+        tests:
+          - unique
+          - not_null        
       - name: ingestion_ts
         description: "Timestamp when the row was loaded into ClickHouse"

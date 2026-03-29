@@ -2,15 +2,9 @@ version: 2
 
 models:
   - name: mart_weather_daily
-    description: "Daily weather information aggregated"
-    data_tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - date
-              - city
+    description: "Daily weather aggregations per city"
     columns:
-      - name: date
+      - name: observation_date
         description: "Date of the weather observation"
         tests:
           - not_null
@@ -18,6 +12,10 @@ models:
         description: "Name of the city"
         tests:
           - not_null
+      - name: latitude
+        description: "Geographic latitude of the city"
+      - name: longitude
+        description: "Geographic longitude of the city"          
       - name: country
         description: "Name of the country"
         tests:
@@ -44,7 +42,53 @@ models:
         description: "Average day relative humidity percentage (0-100)"       
       - name: avg_pressure
         description: "Average day atmospheric pressure in hPa"
+      - name: tech_key
+        description: "Deterministic hash key generated from city and date. Used as unique row identifier for joins and traceability across models."
+        tests:
+          - unique
+          - not_null         
       - name: update_ts
         description: "Timestamp when dbt last processed this row"
       - name: ingestion_ts
         description: "Timestamp when the row was loaded into ClickHouse"
+
+  - name: mart_weather_hourly
+    description: "Enriched hourly weather observations per city"
+    columns:
+      - name: observation_timestamp
+        description: "Timestamp of the weather observation"
+        tests:
+          - not_null
+      - name: city
+        description: "Name of the city"
+        tests:
+          - not_null
+      - name: latitude
+        description: "Geographic latitude of the city"
+      - name: longitude
+        description: "Geographic longitude of the city"          
+      - name: country
+        description: "Name of the country"
+        tests:
+          - not_null
+      - name: temperature
+        description: "Temperature in Celsius"
+      - name: precipitation
+        description: "Precipitation amount in mm"
+      - name: wind_speed
+        description: "Wind speed in km/h"
+      - name: wind_gusts
+        description: "Wind gusts speed in km/h"
+      - name: humidity
+        description: "Relative humidity percentage (0-100)"       
+      - name: pressure
+        description: "Atmospheric pressure in hPa"
+      - name: tech_key
+        description: "Deterministic hash key generated from city and timestamp. Used as unique row identifier for joins and traceability across models."
+        tests:
+          - unique
+          - not_null        
+      - name: update_ts
+        description: "Timestamp when dbt last processed this row"
+      - name: ingestion_ts
+        description: "Timestamp when the row was loaded into ClickHouse"        

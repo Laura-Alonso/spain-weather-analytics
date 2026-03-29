@@ -1,3 +1,7 @@
+{{ config(
+    post_hook="{{ apply_column_comments() }}",
+) }}
+
 with source as (
 
     select * from {{ source('weather', 'dim_city') }}

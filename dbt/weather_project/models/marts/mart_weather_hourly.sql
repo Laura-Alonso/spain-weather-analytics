@@ -1,18 +1,18 @@
 {{ config(
     materialized='incremental',
     engine = 'MergeTree()',
-    unique_key=['city', 'observation_date'],
+    unique_key=['city', 'observation_timestamp'],  
     incremental_strategy='delete+insert',
     post_hook="{{ apply_column_comments() }}",
-    partition_by='toYYYYMM(observation_date)',
-    order_by='(city, observation_date)'
+    partition_by='toYYYYMM(observation_timestamp)', 
+    order_by='(city, observation_timestamp)' 
 ) }}
 
 with observations as (
     
     select * from {{ ref('int_weather_observations') }}
     {% if is_incremental() %}
-    where timestamp >= toStartOfDay(now() - interval 1 day)
+    where timestamp >= toStartOfDay(now() - interval 2 day)
     {% endif %}
 ),
 
@@ -28,26 +28,22 @@ country as (
 
 ),
 
+
 aggregated as (
 
     SELECT
-      toDate(o.timestamp) as observation_date, 
+      o.timestamp as observation_timestamp, 
       ci.city_name as city,
       ci.longitude as longitude,
-      ci.latitude as latitude,      
+      ci.latitude as latitude,
       co.country_name as country,
-      avg(o.temperature) as avg_temperature,
-      min(o.temperature) as min_temperature,
-      max(o.temperature) as max_temperature,
-      (max(o.temperature) - min(o.temperature)) as thermal_range,
-      sum(o.precipitation) as total_precipitation,
-      countIf(o.precipitation > 0) as rainy_hours,
-      max(o.wind_speed) as max_wind_speed,
-      avg(o.wind_speed) as avg_wind_speed,
-      max(o.wind_gusts) as max_wind_gusts,
-      avg(o.humidity) as avg_humidity,
-      avg(o.pressure) as avg_pressure,
-      cityHash64(ci.city_name, toString(toDate(o.timestamp))) as tech_key,
+      o.temperature as temperature,
+      o.precipitation as precipitation,
+      o.wind_speed as wind_speed,
+      o.wind_gusts as wind_gusts,
+      o.humidity as humidity,
+      o.pressure as pressure,
+      cityHash64(ci.city_name, toString(o.timestamp)) as tech_key,
       now() as update_ts
 
     from observations as o
@@ -55,7 +51,6 @@ aggregated as (
      on o.city_id = ci.city_id
     left join country as co
      on ci.country_id = co.country_id
-    group by 1,2,3,4,5
 
 )
 
@@ -71,5 +66,5 @@ from aggregated as agg
 {% if is_incremental() %}
 left join {{ this }} as existing
  on agg.city = existing.city
- and agg.observation_date = existing.observation_date
+ and agg.observation_timestamp = existing.observation_timestamp
 {% endif %}

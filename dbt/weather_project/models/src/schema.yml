@@ -21,11 +21,11 @@ sources:
           - name: latitude
             description: "Geographic latitude of the city"
             tests:
-              - not null
+              - not_null
           - name: longitude
             description: "Geographic longitude of the city"
             tests:
-              - not null
+              - not_null
           - name: country_id
             description: "Foreign key referencing dim_country"
             tests:

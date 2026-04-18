@@ -1,28 +1,29 @@
 {
-  "run_date": "2026-03-29T11:08:29.416618",
+  "run_date": "2026-04-18T07:16:48.741700",
   "rmse_winner": "LinearRegression",
   "production_model": "LightGBM",
-  "production_model_reason": "RMSE difference vs LinearRegression is negligible (0.05 C) but LightGBM handles non-linear patterns and extreme weather events better, making it more robust for production use.",
+  "production_model_selected_manually": true,
+  "production_model_reason": "RMSE difference vs LinearRegression is negligible (0.05\u00b0C) but LightGBM distributes importance across lag, time, humidity and pressure features \u2014 more robust for recursive 168-hour forecasting.",
   "results": {
     "XGBoost": {
-      "rmse": 0.741841,
-      "mae": 0.517196,
-      "duration": "0m 8s"
+      "rmse": 0.733068,
+      "mae": 0.506079,
+      "duration": "0m 7s"
     },
     "LightGBM": {
-      "rmse": 0.722258,
-      "mae": 0.506234,
+      "rmse": 0.7292,
+      "mae": 0.510019,
       "duration": "0m 7s"
     },
     "LinearRegression": {
-      "rmse": 0.672703,
-      "mae": 0.497834,
+      "rmse": 0.678819,
+      "mae": 0.504821,
       "duration": "0m 0s"
     },
-    "Prophet": {
-      "rmse": 58.997186,
-      "mae": 48.083908,
-      "duration": "2m 13s"
+    "CatBoost": {
+      "rmse": 0.796571,
+      "mae": 0.56372,
+      "duration": "0m 16s"
     }
   }
 }

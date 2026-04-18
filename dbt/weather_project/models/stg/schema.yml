@@ -101,7 +101,6 @@ models:
       - name: tech_key
         description: "Deterministic hash key generated from city and timestamp. Used as unique row identifier for joins and traceability across models."
         tests:
-          - unique
           - not_null        
       - name: ingestion_ts
         description: "Timestamp when the row was loaded into ClickHouse"

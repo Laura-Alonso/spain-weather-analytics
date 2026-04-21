@@ -17,6 +17,7 @@ client = clickhouse_connect.get_client(
     database=os.getenv("CLICKHOUSE_DATABASE")
     )
 
+DATABASE = os.getenv("CLICKHOUSE_DATABASE")
 
 # API congiguration
 URL = "https://api.open-meteo.com/v1/forecast"
@@ -89,11 +90,14 @@ for city in cities:
 
     time.sleep(1)
 
-client.command("""
-ALTER TABLE weather.ingestion_state
-UPDATE
-    last_successful_run = now(),
-    window_start = now() - INTERVAL 1 DAY,
-    window_end = now()
-WHERE pipeline = 'weather_hourly_ingestion'
+client.command(f"DELETE FROM {DATABASE}.ingestion_state WHERE pipeline = 'weather_hourly_ingestion'")
+
+client.command(f"""
+INSERT INTO {DATABASE}.ingestion_state (pipeline, last_successful_run, window_start, window_end)
+VALUES (
+    'weather_hourly_ingestion',
+    now(),
+    now() - INTERVAL 1 DAY,
+    now()
+)
 """)

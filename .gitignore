@@ -220,3 +220,9 @@ dbt/weather_project/dbt_packages/
 dbt/weather_project/logs/
 dbt/logs/
 profiles.yml
+
+# Logs
+logs/query_log.sql
+
+# CatBoost
+catboost_info/

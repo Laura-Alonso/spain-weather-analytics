@@ -1,0 +1,18 @@
+{
+  "model_version": "lgbm_v1_2026-05",
+  "trained_at": "2026-05-09T06:23:41.865661",
+  "n_rows": 73771,
+  "date_range_from": "2024-03-29 00:00:00",
+  "date_range_to": "2026-05-08 23:00:00",
+  "regressor": {
+    "type": "LGBMRegressor",
+    "insample_rmse": 0.546244,
+    "insample_mae": 0.388571
+  },
+  "classifier": {
+    "type": "LGBMClassifier",
+    "rain_base_rate": 0.1012,
+    "insample_auc": 0.968611,
+    "insample_logloss": 0.128987
+  }
+}
